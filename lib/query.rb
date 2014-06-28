@@ -15,17 +15,57 @@ API_KEY = 'BAD3D130F4D06DB91EB99C1009E4A8BD'
 # matches_requested=<n> # Defaults is 25 matches, this can limit to less
 # Example: getHistory('skill=3')
 
-def getHistory(*params)
-    url = "https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?#{params.join('').to_s}&key=#{API_KEY}"
-    puts "Fetching #{url}"
-    JSON.load(open(url))
-end
-
 # getDetails is like getHistory but queries to GetMatchDetails
 def getDetails(match_id)
     url = "https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/V001/?match_id=#{match_id}&key=#{API_KEY}"
     puts "Fetching #{url}"
     JSON.load(open(url))
+end
+
+class History
+    def initialize(*params)
+        url = "https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?#{params.join('').to_s}&key=#{API_KEY}"
+        puts "Fetching #{url}"
+        @history = JSON.load(open(url))
+    end
+
+    def get_matchids # return a list of match ids
+        @history['result']['matches'].collect { |match| match['match_id'] }
+    end
+
+    def get_matchids_ranked
+        @history['result']['matches'].collect { |match| match['match_id'] if match['lobby_type']  == 7 }
+    end
+
+    def get_lobbytypes
+        @history['result']['matches'].collect { |match| match['lobby_type'] }
+    end
+
+    def get_players
+        @history['result']['matches'].collect { |match| match['players'] }
+    end
+
+    def get_position(position)
+        @history['result']['matches'][position]
+    end
+end
+
+class Match
+    def initialize(match_id)
+        @detail = getDetails(match_id)
+    end
+
+    def is_captainsmode?
+        !@detail['result']['picks_bans'].nil?
+    end
+
+    def get_duration
+        @detail['result']['duration']
+    end
+
+    def get_matchid
+        @detail['result']['match_id']
+    end
 end
 
 # getMatchIds takes a json from getHistory and returns list of match ids that has 10 players
@@ -45,7 +85,13 @@ def selectCaptainsMode(matchDetails)
 end
 
 
-deets = getMatchIds(getHistory('skill=3')).collect { |id| getDetails(id) }
-good = selectDuration(deets, 0)
-selectCaptainsMode(good)
+#history = History.new ('skill=3')
+#match_ids = getMatchIds(history)
+#matchDetails = match_ids.collect { |id| getDetails(id) }
+#selectCaptainsMode(matchDetails)
 
+history = History.new ('skill=3')
+rankedids = history.get_matchids_ranked.compact
+puts rankedids
+rankedMatches = rankedids.collect { |id| Match.new (id) }
+rankedMatches.each { |match| puts "#{match.get_matchid} -- #{match.is_captainsmode?}" }
