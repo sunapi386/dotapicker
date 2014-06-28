@@ -1,0 +1,3 @@
+[submodule "nashbydota"]
+    path = nashbydota
+    url = https://github.com/nashby/dota.git 
