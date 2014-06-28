@@ -1,1 +1,3 @@
-gem require_all
+source 'https://rubygems.org'
+gem 'open-uri'
+gem 'json'
